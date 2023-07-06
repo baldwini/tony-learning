@@ -18,6 +18,7 @@ async def get_pokemon_from_api(poke_id: int):
     response = await client.get(poke_url + str(poke_id))
     return response
 
+
 @app.get("/{poke_id}")
 async def get_pokemon_by_id(poke_id: int) -> Pokemon:
     response = await get_pokemon_from_api(poke_id)
