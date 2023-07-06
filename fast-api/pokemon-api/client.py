@@ -1,5 +1,6 @@
 import httpx
 import asyncio
+import json
 import random
 
 async def main():
@@ -8,7 +9,9 @@ async def main():
         for i in range(100):
             poke_num = random.randint(1, 1000)
             response = await client.get("http://127.0.0.1:8000/" + str(poke_num))
-            responses.append(response)
+            poke_obj = response.json()
+            print(poke_obj['name'])
+            responses.append(poke_obj)
         print(responses)
 
 if __name__ == '__main__':
