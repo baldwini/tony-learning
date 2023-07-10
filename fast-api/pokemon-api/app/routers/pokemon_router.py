@@ -23,9 +23,9 @@ class PokemonRouter:
     async def get_pokemon_by_id(request: Request, poke_id: int) -> Pokemon:
         response = request.state.redis_db.get(poke_id)
         if response is None:
-            HTTPException(status_code=404, detail="Item not found")
+            raise HTTPException(status_code=404, detail="Item not found")
         pokemon = json.loads(response)
-        return Pokemon(pokemon)
+        return Pokemon(**pokemon)
 
     @router.post(
         path="/{poke_id}",
@@ -49,7 +49,7 @@ class PokemonRouter:
     async def delete_pokemon(request: Request, poke_id: int) -> Pokemon:
         response = request.state.redis_db.get(poke_id)
         if response is None:
-            HTTPException(status_code=404, detail="Item not found")
+            raise HTTPException(status_code=404, detail="Item not found")
         request.state.redis_db.delete(poke_id)
         pokemon = json.loads(response)
-        return Pokemon(pokemon)
+        return Pokemon(**pokemon)
