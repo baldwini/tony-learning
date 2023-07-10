@@ -20,11 +20,12 @@ class PokemonApi:
             uvicorn.Config(
                 app=app,
                 host="0.0.0.0",
+                port=8000
             )
         )
         self.client = httpx.AsyncClient(verify=False)
         self.redis_db = redis.Redis(
-            host='127.0.0.1',
+            host='redis_db',
             port=6379,
             db=0
         )
