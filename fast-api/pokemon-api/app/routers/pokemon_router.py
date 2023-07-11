@@ -1,9 +1,6 @@
 """
     Pokemon Router API Endpoint
 """
-# from fastapi_utils.inferring_router import InferringRouter
-# from fastapi_utils.cbv import cbv
-
 from fastapi import APIRouter, Request, HTTPException
 import json
 
