@@ -1,8 +1,7 @@
 import httpx
 import uvicorn
-import json
 import redis
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
 
 from app.routers import pokemon_router
 
@@ -40,18 +39,6 @@ class PokemonApi:
             request.state.redis_db = self.redis_db
             response = await call_next(request)
             return response
-
-            #Load response_body courtesy of https://stackoverflow.com/a/71883126
-            #response_body = b""
-            #async for chunk in response.body_iterator:
-            #    response_body += chunk
-            #print(f"response_body={response_body.decode()}")
-
-            #Set response in Redis
-            #self.r.set(request.path_params['poke_id'], response_body.decode())
-
-            #return Response(content=response_body, status_code=response.status_code,
-            #                headers=dict(response.headers), media_type=response.media_type)
 
 
 if __name__ == "__main__":
