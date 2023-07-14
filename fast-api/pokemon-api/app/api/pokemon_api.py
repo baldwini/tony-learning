@@ -4,6 +4,7 @@ import redis
 from fastapi import FastAPI, Request
 
 from app.routers import pokemon_router
+from app.rabbitmq import rabbitmq_connection_manager
 
 
 class PokemonApi:
@@ -28,15 +29,18 @@ class PokemonApi:
             port=6379,
             db=0
         )
+        self.rmq_conn_mgr = rabbitmq_connection_manager.RabbitMQConnectionManager()
 
         @app.on_event("startup")
         async def startup_event():
-            print("Starting Up...")
+            print("Creating RabbitMQ Manager Asynchronously...")
+            await self.rmq_conn_mgr.create()
 
         @app.middleware("http")
         async def pokemon_middleware(request: Request, call_next):
             request.state.client = self.client
             request.state.redis_db = self.redis_db
+            request.state.rmq = self.rmq_conn_mgr
             response = await call_next(request)
             return response
 
