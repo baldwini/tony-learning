@@ -12,7 +12,7 @@ class RabbitMQConnectionManager:
         self.channel: Optional[AbstractChannel] = None
 
     async def create(self):
-        self.connection = await aiormq.connect(url="amqp://guest:guest@localhost/")
+        self.connection = await aiormq.connect(url="amqp://guest:guest@rmq/")
         self.channel = await self.connection.channel()
 
         await self.channel.exchange_declare(

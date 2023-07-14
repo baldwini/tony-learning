@@ -2,8 +2,8 @@
     Pokemon Router API Endpoint
 """
 from fastapi import APIRouter, Request, HTTPException
-import redis
 from aiormq.connection import AbstractChannel
+import redis
 
 from app.models.pokemon_api_models import Pokemon
 from app.rabbitmq.rabbitmq_connection_manager import RabbitMQConnectionManager
@@ -19,7 +19,7 @@ class PokemonRouter:
         response_model=Pokemon,
         description="Gets Pokemon from Redis",
     )
-    async def get_pokemon_by_id(self, request: Request, poke_id: int) -> Pokemon:
+    async def get_pokemon_by_id(request: Request, poke_id: int) -> Pokemon:
         db: redis.Redis = request.state.redis_db
         response = db.get(poke_id)
         if response is None:
@@ -31,13 +31,13 @@ class PokemonRouter:
         response_model=None,
         description="Produces set command in RMQ to deliver to Database Microservice"
     )
-    async def publish_pokemon_set(self, request: Request, poke_id: int):
+    async def publish_pokemon_set(request: Request, poke_id: int):
         rmq: RabbitMQConnectionManager = request.state.rmq
         ch: AbstractChannel = rmq.channel
         await ch.basic_publish(
             exchange=rmq.exchange,
             routing_key='set',
-            body=str(poke_id)
+            body=str(poke_id).encode('ASCII')
         )
 
     @router.delete(
@@ -45,7 +45,7 @@ class PokemonRouter:
         response_model=None,
         description="Produces delete command in RMQ to send to Database Microservice"
     )
-    async def publish_pokemon_delete(self, request: Request, poke_id: int):
+    async def publish_pokemon_delete(request: Request, poke_id: int):
         rmq: RabbitMQConnectionManager = request.state.rmq
         ch: AbstractChannel = rmq.channel
         await ch.basic_publish(
@@ -59,7 +59,7 @@ class PokemonRouter:
         response_model=Pokemon,
         description="Creates new Pokemon in Redis by retrieving it from Pokeapi"
     )
-    async def create_pokemon(self, request: Request, poke_id: int) -> Pokemon:
+    async def create_pokemon(request: Request, poke_id: int) -> Pokemon:
         if request.state.redis_db.get(poke_id) is not None:
             raise HTTPException(status_code=409, detail="Item already exists")
         response = await request.state.client.get(poke_url + str(poke_id))
@@ -73,7 +73,7 @@ class PokemonRouter:
         response_model=Pokemon,
         description="Deletes Pokemon in Redis"
     )
-    async def delete_pokemon(self, request: Request, poke_id: int) -> Pokemon:
+    async def delete_pokemon(request: Request, poke_id: int) -> Pokemon:
         db: redis.Redis = request.state.redis_db
         response = db.get(poke_id)
         if response is None:
