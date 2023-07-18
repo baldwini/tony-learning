@@ -20,15 +20,13 @@ class RabbitMQConnectionManager:
             exchange_type='direct'
         )
 
-        commands = ['set', 'delete']
-        for command in commands:
-            await self.channel.queue_declare(
-                queue=command + '_queue',
-                exclusive=True,
-            )
+    async def define_queue(self, command: str):
+        queue = await self.channel.queue_declare(
+            queue=command+'_queue',
+        )
 
-            await self.channel.queue_bind(
-                queue=command + '_queue',
-                exchange=self.exchange,
-                routing_key=command
-            )
+        await self.channel.queue_bind(
+            queue=queue.queue,
+            exchange=self.exchange,
+            routing_key=command
+        )

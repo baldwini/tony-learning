@@ -32,12 +32,16 @@ class PokemonRouter:
         description="Produces set command in RMQ to deliver to Database Microservice"
     )
     async def publish_pokemon_set(request: Request, poke_id: int):
+        response = await request.state.client.get(poke_url + str(poke_id))
+        pokemon = response.json()
+        pokemon_obj = Pokemon(id=poke_id, name=pokemon['forms'][0]['name'])
+
         rmq: RabbitMQConnectionManager = request.state.rmq
         ch: AbstractChannel = rmq.channel
         await ch.basic_publish(
             exchange=rmq.exchange,
             routing_key='set',
-            body=str(poke_id).encode('ASCII')
+            body=pokemon_obj.json().encode('ASCII')
         )
 
     @router.delete(
@@ -51,7 +55,7 @@ class PokemonRouter:
         await ch.basic_publish(
             exchange=rmq.exchange,
             routing_key='delete',
-            body=str(poke_id)
+            body=str(poke_id).encode('ASCII')
         )
 
     @router.post(
