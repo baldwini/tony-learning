@@ -3,7 +3,12 @@
 """
 from fastapi import APIRouter, Request, HTTPException
 from aiormq.connection import AbstractChannel
+from aiormq.abc import DeliveredMessage
+from typing import Coroutine
 import redis
+import uuid
+import asyncio
+import aiormq
 
 from app.models.pokemon_api_models import Pokemon
 from app.rabbitmq.rabbitmq_connection_manager import RabbitMQConnectionManager
@@ -14,17 +19,35 @@ router = APIRouter()
 
 
 class PokemonRouter:
+
     @router.get(
         path="/{poke_id}",
         response_model=Pokemon,
-        description="Gets Pokemon from Redis",
+        description="Submits Get Request to Rabbit",
     )
     async def get_pokemon_by_id(request: Request, poke_id: int) -> Pokemon:
-        db: redis.Redis = request.state.redis_db
-        response = db.get(poke_id)
-        if response is None:
-            raise HTTPException(status_code=404, detail="Item not found")
-        return Pokemon.parse_raw(response)
+        rmq: RabbitMQConnectionManager = request.state.rmq
+        ch: AbstractChannel = rmq.channel
+
+        correlation_id = str(uuid.uuid4())
+        future = asyncio.get_event_loop().create_future()
+
+        request.state.get_futures[correlation_id] = future
+
+        await ch.basic_publish(
+            body=str(poke_id).encode('ASCII'),
+            exchange=rmq.exchange,
+            routing_key='get',
+            properties=aiormq.spec.Basic.Properties(
+                content_type='text/plain',
+                correlation_id=correlation_id,
+                reply_to='get_callback_queue',
+            )
+        )
+
+        await ch.basic_consume(queue='get_callback_queue', consumer_callback=request.state.on_get_response)
+
+        return Pokemon.parse_raw(await future)
 
     @router.post(
         path="/{poke_id}",
@@ -57,6 +80,18 @@ class PokemonRouter:
             routing_key='delete',
             body=str(poke_id).encode('ASCII')
         )
+
+    @router.get(
+        path="/redis/{poke_id}",
+        response_model=Pokemon,
+        description="Gets Pokemon from Redis",
+    )
+    async def get_pokemon_by_id(request: Request, poke_id: int) -> Pokemon:
+        db: redis.Redis = request.state.redis_db
+        response = db.get(poke_id)
+        if response is None:
+            raise HTTPException(status_code=404, detail="Item not found")
+        return Pokemon.parse_raw(response)
 
     @router.post(
         path="/redis/{poke_id}",

@@ -12,7 +12,7 @@ class RabbitMQConnectionManager:
         self.channel: Optional[AbstractChannel] = None
 
     async def create(self):
-        self.connection = await aiormq.connect(url="amqp://guest:guest@rmq/")
+        self.connection = await aiormq.connect(url="amqp://guest:guest@localhost/")
         self.channel = await self.connection.channel()
 
         await self.channel.exchange_declare(
@@ -29,4 +29,14 @@ class RabbitMQConnectionManager:
             queue=queue.queue,
             exchange=self.exchange,
             routing_key=command
+        )
+
+    async def define_callback_queue(self, command: str):
+        callback_queue = await self.channel.queue_declare(
+            queue=command+'_callback_queue',
+        )
+        await self.channel.queue_bind(
+            queue=callback_queue.queue,
+            exchange=self.exchange,
+            routing_key=command+'_callback'
         )

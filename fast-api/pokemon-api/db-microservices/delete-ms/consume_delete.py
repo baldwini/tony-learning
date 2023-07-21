@@ -1,9 +1,10 @@
 from redis import Redis
-from aiormq.types import DeliveredMessage
+from aiormq.abc import DeliveredMessage
 import asyncio
 
 from app.models.pokemon_api_models import Pokemon
 from app.rabbitmq.rabbitmq_connection_manager import RabbitMQConnectionManager
+
 
 rmq = RabbitMQConnectionManager()
 redis_db: Redis = Redis(
@@ -13,15 +14,15 @@ redis_db: Redis = Redis(
 )
 
 
-async def callback(body: DeliveredMessage):
-    poke_id = body.body.decode('ASCII')
+async def callback(message: DeliveredMessage):
+    poke_id = message.body.decode('ASCII')
     redis_db.delete(poke_id)
 
 
 async def main():
     await rmq.create()
     await rmq.define_queue('delete')
-    await rmq.channel.basic_qos(prefetch_count=100)
+    await rmq.channel.basic_qos(prefetch_count=1)
     await rmq.channel.basic_consume(queue='delete_queue', consumer_callback=callback, no_ack=True)
 
 loop = asyncio.new_event_loop()

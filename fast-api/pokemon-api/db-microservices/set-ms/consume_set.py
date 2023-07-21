@@ -1,5 +1,5 @@
 from redis import Redis
-from aiormq.types import DeliveredMessage
+from aiormq.abc import DeliveredMessage
 import asyncio
 
 from app.models.pokemon_api_models import Pokemon
@@ -13,15 +13,15 @@ redis_db: Redis = Redis(
 )
 
 
-async def callback(body: DeliveredMessage):
-    pokemon = Pokemon.parse_raw(body.body)
+async def callback(message: DeliveredMessage):
+    pokemon = Pokemon.parse_raw(message.body)
     redis_db.set(pokemon.id, pokemon.json())
 
 
 async def main():
     await rmq.create()
     await rmq.define_queue('set')
-    await rmq.channel.basic_qos(prefetch_count=100)
+    await rmq.channel.basic_qos(prefetch_count=1)
     await rmq.channel.basic_consume(queue='set_queue', consumer_callback=callback, no_ack=True)
 
 loop = asyncio.new_event_loop()

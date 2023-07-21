@@ -2,6 +2,7 @@ import httpx
 import uvicorn
 import redis
 from fastapi import FastAPI, Request
+from aiormq.abc import DeliveredMessage
 
 from app.routers import pokemon_router
 from app.rabbitmq import rabbitmq_connection_manager
@@ -30,6 +31,7 @@ class PokemonApi:
             db=0
         )
         self.rmq_conn_mgr = rabbitmq_connection_manager.RabbitMQConnectionManager()
+        self.get_futures = {}
 
         @app.on_event("startup")
         async def startup_event():
@@ -41,8 +43,14 @@ class PokemonApi:
             request.state.client = self.client
             request.state.redis_db = self.redis_db
             request.state.rmq = self.rmq_conn_mgr
+            request.state.on_get_response = self.on_get_response
+            request.state.get_futures = self.get_futures
             response = await call_next(request)
             return response
+
+    async def on_get_response(self, message: DeliveredMessage):
+        future = self.get_futures.pop(message.header.properties.correlation_id)
+        future.set_result(message.body)
 
 
 if __name__ == "__main__":
