@@ -45,7 +45,7 @@ class PokemonRouter:
             )
         )
 
-        await ch.basic_consume(queue='get_callback_queue', consumer_callback=request.state.on_get_response)
+        await ch.basic_consume(queue='get_callback_queue', consumer_callback=request.state.on_get_response, no_ack=True)
 
         return Pokemon.parse_raw(await future)
 
