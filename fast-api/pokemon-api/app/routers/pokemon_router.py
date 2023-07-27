@@ -6,11 +6,11 @@ from aiormq.connection import AbstractChannel
 from aiormq.abc import DeliveredMessage
 from typing import Coroutine
 import redis
-import uuid
+from uuid import uuid4
 import asyncio
 import aiormq
 
-from app.models.pokemon_api_models import Pokemon
+from app.models.pokemon_api_models import Pokemon, Transaction, ApiResponse
 from app.rabbitmq.rabbitmq_connection_manager import RabbitMQConnectionManager
 
 poke_url = "https://pokeapi.co/api/v2/pokemon/"
@@ -29,14 +29,14 @@ class PokemonRouter:
         rmq: RabbitMQConnectionManager = request.state.rmq
         ch: AbstractChannel = rmq.channel
 
-        correlation_id = str(uuid.uuid4())
+        correlation_id = str(uuid4())
         future = asyncio.get_event_loop().create_future()
 
         request.state.get_futures[correlation_id] = future
 
         await ch.basic_publish(
             body=str(poke_id).encode('ASCII'),
-            exchange=rmq.exchange,
+            exchange=rmq.pokemon_exchange,
             routing_key='get',
             properties=aiormq.spec.Basic.Properties(
                 content_type='text/plain',
@@ -54,17 +54,23 @@ class PokemonRouter:
         response_model=None,
         description="Produces set command in RMQ to deliver to Database Microservice"
     )
-    async def publish_pokemon_set(request: Request, poke_id: int):
+    async def publish_pokemon_set(request: Request, poke_id: int, trace_id: str | None = None):
         response = await request.state.client.get(poke_url + str(poke_id))
         pokemon = response.json()
+
+        if not trace_id:
+            trace_id = str(uuid4())
+
         pokemon_obj = Pokemon(id=poke_id, name=pokemon['forms'][0]['name'])
+
+        transaction_obj = Transaction(trace_id=trace_id, pokemon=pokemon_obj)
 
         rmq: RabbitMQConnectionManager = request.state.rmq
         ch: AbstractChannel = rmq.channel
         await ch.basic_publish(
-            exchange=rmq.exchange,
+            exchange=rmq.pokemon_exchange,
             routing_key='set',
-            body=pokemon_obj.json().encode('ASCII')
+            body=transaction_obj.json().encode('ASCII')
         )
 
     @router.delete(
