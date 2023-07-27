@@ -27,14 +27,16 @@ async def callback(message: DeliveredMessage):
             correlation_id=message.header.properties.correlation_id
         ),
     )
+
     await message.channel.basic_ack(message.delivery.delivery_tag)
     print('Request complete')
 
 
 async def main():
     await rmq.create()
-    await rmq.define_queue('get')
-    await rmq.define_callback_queue('get')
+    await rmq.create_pokemon_exchange()
+    await rmq.define_pokemon_queue(command='get')
+    await rmq.define_callback_queue(command='get')
     await rmq.channel.basic_qos(prefetch_count=1)
     await rmq.channel.basic_consume(queue='get_queue', consumer_callback=callback)
 

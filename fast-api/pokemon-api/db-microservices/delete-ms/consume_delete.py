@@ -21,7 +21,8 @@ async def callback(message: DeliveredMessage):
 
 async def main():
     await rmq.create()
-    await rmq.define_queue('delete')
+    await rmq.create_pokemon_exchange()
+    await rmq.define_pokemon_queue(command='delete')
     await rmq.channel.basic_qos(prefetch_count=1)
     await rmq.channel.basic_consume(queue='delete_queue', consumer_callback=callback, no_ack=True)
 
