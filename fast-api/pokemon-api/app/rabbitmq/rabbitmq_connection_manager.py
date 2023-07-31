@@ -1,7 +1,6 @@
 import aiormq
 from aiormq import Connection
 from aiormq.connection import AbstractChannel
-from typing import Optional
 
 
 class RabbitMQConnectionManager:
@@ -9,8 +8,8 @@ class RabbitMQConnectionManager:
     def __init__(self):
         self.pokemon_exchange: str = 'pokemon_exchange'
         self.kafka_exchange: str = 'kafka_exchange'
-        self.connection: Optional[Connection] = None
-        self.channel: Optional[AbstractChannel] = None
+        self.connection: Connection | None = None
+        self.channel: AbstractChannel | None = None
 
     async def create(self):
         self.connection = await aiormq.connect(url="amqp://guest:guest@127.0.0.1/")
