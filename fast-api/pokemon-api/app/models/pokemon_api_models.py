@@ -8,9 +8,11 @@ class Pokemon(BaseModel):
 
 class Transaction(BaseModel):
     trace_id: str
+    transaction_id: str
     pokemon: Pokemon
 
+
 class ApiResponse(BaseModel):
-    trace_id: str
+    transaction: Transaction
     status_code: str
     message: str

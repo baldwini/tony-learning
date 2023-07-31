@@ -16,18 +16,20 @@ redis_db: Redis = Redis(
 async def callback(message: DeliveredMessage):
     transaction: Transaction = Transaction.parse_raw(message.body)
     pokemon: Pokemon = transaction.pokemon
-    status_code: str = "200"
-    error_message: str
+    status_code: str
+    message: str
     response: ApiResponse
 
     if redis_db.get(pokemon.id):
         status_code = "409"
-        error_message = "Database resource already exists"
-        response = ApiResponse(trace_id=transaction.trace_id, status_code=status_code, message=error_message)
+        message = "Database resource already exists"
+        response = ApiResponse(transaction=transaction, status_code=status_code, message=message)
 
     else:
         redis_db.set(pokemon.id, pokemon.json())
-        response = ApiResponse(trace_id=transaction.trace_id, status_code=status_code, message=pokemon.json())
+        status_code = "200"
+        message = f"Created resource: {pokemon.json()}"
+        response = ApiResponse(transaction=transaction, status_code=status_code, message=message)
 
     await rmq.channel.basic_publish(
         exchange="kafka_exchange",

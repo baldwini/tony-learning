@@ -26,7 +26,7 @@ class PokemonApi:
         )
         self.client = httpx.AsyncClient(verify=False)
         self.redis_db = redis.Redis(
-            host='redis_db',
+            host='127.0.0.1',
             port=6379,
             db=0
         )
@@ -37,6 +37,8 @@ class PokemonApi:
         async def startup_event():
             print("Creating RabbitMQ Manager Asynchronously...")
             await self.rmq_conn_mgr.create()
+            await self.rmq_conn_mgr.create_pokemon_exchange()
+            await self.rmq_conn_mgr.create_kafka_exchange()
 
         @app.middleware("http")
         async def pokemon_middleware(request: Request, call_next):

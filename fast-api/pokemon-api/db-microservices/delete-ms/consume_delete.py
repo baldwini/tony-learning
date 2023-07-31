@@ -17,20 +17,26 @@ redis_db: Redis = Redis(
 async def callback(message: DeliveredMessage):
     transaction: Transaction = Transaction.parse_raw(message.body)
     pokemon: Pokemon = transaction.pokemon
-    status_code: str = "200"
-    error_message: str
+    status_code: str
+    message: str
     response: ApiResponse
 
     if not redis_db.get(pokemon.id):
         status_code = "404"
-        error_message = "Pokemon not found"
-        response = ApiResponse(trace_id=transaction.trace_id, status_code=status_code, message=error_message)
+        message = "Pokemon resource not found"
+        response = ApiResponse(transaction=transaction, status_code=status_code, message=message)
 
     else:
         redis_db.delete(pokemon.id)
-        response = ApiResponse(trace_id=transaction.trace_id, status_code=status_code, message=pokemon.json())
+        status_code = "200"
+        message = f"Created resource: {pokemon.json()}"
+        response = ApiResponse(transaction=transaction, status_code=status_code, message=message)
 
-    return response
+    await rmq.channel.basic_publish(
+        exchange="kafka_exchange",
+        routing_key=str(pokemon.id),
+        body=response.json().encode('ASCII')
+    )
 
 
 async def main():

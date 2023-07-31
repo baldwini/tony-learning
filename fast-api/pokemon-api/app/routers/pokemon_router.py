@@ -54,16 +54,23 @@ class PokemonRouter:
         response_model=None,
         description="Produces set command in RMQ to deliver to Database Microservice"
     )
-    async def publish_pokemon_set(request: Request, poke_id: int, trace_id: str | None = None):
+    async def publish_pokemon_set(
+            request: Request,
+            poke_id: int,
+            trace_id: str | None = None,
+            transaction_id: str | None = None
+    ):
         response = await request.state.client.get(poke_url + str(poke_id))
         pokemon = response.json()
 
         if not trace_id:
             trace_id = str(uuid4())
+        if not transaction_id:
+            transaction_id = str(uuid4())
 
         pokemon_obj = Pokemon(id=poke_id, name=pokemon['forms'][0]['name'])
 
-        transaction_obj = Transaction(trace_id=trace_id, pokemon=pokemon_obj)
+        transaction_obj = Transaction(trace_id=trace_id, transaction_id=transaction_id, pokemon=pokemon_obj)
 
         rmq: RabbitMQConnectionManager = request.state.rmq
         ch: AbstractChannel = rmq.channel

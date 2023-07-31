@@ -13,7 +13,7 @@ class RabbitMQConnectionManager:
         self.channel: Optional[AbstractChannel] = None
 
     async def create(self):
-        self.connection = await aiormq.connect(url="amqp://guest:guest@rmq/")
+        self.connection = await aiormq.connect(url="amqp://guest:guest@127.0.0.1/")
         self.channel = await self.connection.channel()
 
     async def create_pokemon_exchange(self):
@@ -40,15 +40,17 @@ class RabbitMQConnectionManager:
         )
 
     async def define_kafka_queue(self, weight: int):
-        queue = await self.channel.queue_declare(
-            queue='kafka_queue'
-        )
+        for i in range(3):
+            queue = await self.channel.queue_declare(
+                queue='kafka_queue_' + str(i)
+            )
 
-        await self.channel.queue_bind(
-            queue=queue.queue,
-            exchange=self.kafka_exchange,
-            routing_key=str(weight)
-        )
+            await self.channel.queue_bind(
+                queue=queue.queue,
+                exchange=self.kafka_exchange,
+                routing_key=str(weight)
+            )
+
 
     async def define_callback_queue(self, command: str):
         callback_queue = await self.channel.queue_declare(
