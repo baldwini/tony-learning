@@ -58,7 +58,7 @@ class PokemonRouter:
             request: Request,
             poke_id: int,
             trace_id: str | None = None,
-            transaction_id: str | None = None
+            transaction_id: str | None = None,
     ):
         response = await request.state.client.get(poke_url + str(poke_id))
         pokemon = response.json()
@@ -85,13 +85,27 @@ class PokemonRouter:
         response_model=None,
         description="Produces delete command in RMQ to send to Database Microservice"
     )
-    async def publish_pokemon_delete(request: Request, poke_id: int):
+    async def publish_pokemon_delete(
+            request: Request,
+            poke_id: int,
+            trace_id: int | None = None,
+            transaction_id: int | None = None,
+    ):
+        if not trace_id:
+            trace_id = str(uuid4())
+        if not transaction_id:
+            transaction_id = str(uuid4())
+
         rmq: RabbitMQConnectionManager = request.state.rmq
         ch: AbstractChannel = rmq.channel
+
+        pokemon_obj: Pokemon = Pokemon(id=poke_id)
+        transaction_obj: Transaction = Transaction(trace_id=trace_id, transaction_id=transaction_id, pokemon=pokemon_obj)
+
         await ch.basic_publish(
-            exchange=rmq.exchange,
+            exchange=rmq.pokemon_exchange,
             routing_key='delete',
-            body=str(poke_id).encode('ASCII')
+            body=transaction_obj.json().encode('ASCII')
         )
 
     @router.get(

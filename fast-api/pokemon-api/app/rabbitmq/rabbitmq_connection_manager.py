@@ -8,6 +8,7 @@ class RabbitMQConnectionManager:
     def __init__(self):
         self.pokemon_exchange: str = 'pokemon_exchange'
         self.kafka_exchange: str = 'kafka_exchange'
+        self.kafka_queue_amount: int = 3
         self.connection: Connection | None = None
         self.channel: AbstractChannel | None = None
 
@@ -39,7 +40,7 @@ class RabbitMQConnectionManager:
         )
 
     async def define_kafka_queue(self, weight: int):
-        for i in range(3):
+        for i in range(self.kafka_queue_amount):
             queue = await self.channel.queue_declare(
                 queue='kafka_queue_' + str(i)
             )
@@ -49,7 +50,6 @@ class RabbitMQConnectionManager:
                 exchange=self.kafka_exchange,
                 routing_key=str(weight)
             )
-
 
     async def define_callback_queue(self, command: str):
         callback_queue = await self.channel.queue_declare(

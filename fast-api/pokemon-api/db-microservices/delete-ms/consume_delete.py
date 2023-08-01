@@ -29,7 +29,7 @@ async def callback(message: DeliveredMessage):
     else:
         redis_db.delete(pokemon.id)
         status_code = "200"
-        message = f"Created resource: {pokemon.json()}"
+        message = f"Deleted resource: {pokemon.json()}"
         response = ApiResponse(transaction=transaction, status_code=status_code, message=message)
 
     await rmq.channel.basic_publish(

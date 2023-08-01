@@ -4,7 +4,7 @@ from dataclasses_avroschema import AvroModel
 
 @dataclass
 class Pokemon(AvroModel):
-    name: str = field(metadata={"doc": "Pokemon Name"})
+    name: str | None = field(metadata={"doc": "Pokemon Name"})
     id: int = field(metadata={"doc": "Pokemon ID"})
 
 
@@ -59,7 +59,7 @@ pokemon_avro_schema = {
                                 {
                                     "doc": "Pokemon Name",
                                     "name": "name",
-                                    "type": "string"
+                                    "type": ["string", "null"]
                                 },
                                 {
                                     "doc": "Pokemon ID",
