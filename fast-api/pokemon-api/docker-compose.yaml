@@ -1,0 +1,46 @@
+services:
+  apicontainer:
+    container_name: apicontainer
+    image: myimage
+    ports:
+      - 8000:8000
+    networks:
+      - rabbit-net
+      - redis-net
+
+  getcontainer:
+    container_name: getcontainer
+    image: getimage
+    networks:
+      - rabbit-net
+      - redis-net
+
+  setcontainer:
+    container_name: setcontainer
+    image: setimage
+    networks:
+      - rabbit-net
+      - redis-net
+
+  deletecontainer:
+    container_name: deletecontainer
+    image: deleteimage
+    networks:
+      - rabbit-net
+      - redis-net
+
+  kafkacontainer:
+    container_name: kafkacontainer
+    image: kafkaimage
+    networks:
+      - rabbit-net
+
+networks:
+  rabbit-net:
+    driver: bridge
+    name: rabbit-net
+    external: true
+  redis-net:
+    driver: bridge
+    name: redis-net
+    external: true

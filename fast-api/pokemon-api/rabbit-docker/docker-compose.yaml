@@ -1,0 +1,23 @@
+services:
+  rmq:
+    container_name: rmq
+    image: rabbitmq-custom
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - rabbit-net
+  redis_db:
+    container_name: redis_db
+    image: redis
+    ports:
+      - "0.0.0.0:6379:6379"
+    networks:
+      - redis-net
+networks:
+  rabbit-net:
+    driver: bridge
+    name: rabbit-net
+  redis-net:
+    driver: bridge
+    name: redis-net
