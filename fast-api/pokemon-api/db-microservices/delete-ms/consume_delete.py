@@ -8,7 +8,7 @@ from app.rabbitmq.rabbitmq_connection_manager import RabbitMQConnectionManager
 
 rmq = RabbitMQConnectionManager()
 redis_db: Redis = Redis(
-    host='localhost',
+    host='redis_db',
     port=6379,
     db=0
 )

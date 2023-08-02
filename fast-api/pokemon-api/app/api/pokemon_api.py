@@ -26,7 +26,7 @@ class PokemonApi:
         )
         self.client = httpx.AsyncClient(verify=False)
         self.redis_db = redis.Redis(
-            host='127.0.0.1',
+            host='redis_db',
             port=6379,
             db=0
         )

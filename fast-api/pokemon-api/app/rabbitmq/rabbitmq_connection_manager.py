@@ -13,7 +13,7 @@ class RabbitMQConnectionManager:
         self.channel: AbstractChannel | None = None
 
     async def create(self):
-        self.connection = await aiormq.connect(url="amqp://guest:guest@127.0.0.1/")
+        self.connection = await aiormq.connect(url="amqp://guest:guest@rmq/")
         self.channel = await self.connection.channel()
 
     async def create_pokemon_exchange(self):
