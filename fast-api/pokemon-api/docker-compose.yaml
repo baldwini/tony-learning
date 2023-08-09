@@ -35,6 +35,10 @@ services:
     networks:
       - rabbit-net
 
+  kafkaconsumercontainer:
+    container_name: kafkaconsumercontainer
+    image: kafkaconsumerimage
+
 networks:
   rabbit-net:
     driver: bridge
