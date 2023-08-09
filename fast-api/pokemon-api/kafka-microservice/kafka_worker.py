@@ -21,7 +21,6 @@ class PokemonKafkaWorker:
 async def main() -> None:
     pkw: PokemonKafkaWorker = PokemonKafkaWorker()
     await pkw.startup()
-    print("here1")
     for count in range(pkw.rmq_conn_mgr.kafka_queue_amount):
         await pkw.consume_message(count)
 
